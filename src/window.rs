@@ -1,5 +1,7 @@
 use volatile::Volatile;
 
+use crate::renderer::text::CHARACTERS;
+
 const BUFFER_WIDTH: usize = 320;
 const BUFFER_HEIGHT: usize = 200;
 
@@ -228,10 +230,11 @@ const COLOR_PALETTE: [(u8, u8, u8); 216] = [
     (32, 64, 32),
 ];
 
-fn get_next_color(r: u8, g: u8, b: u8) -> u8 {
+fn get_next_color() -> u8 {
     COLOR_PALETTE.len() as u8
 }
 
+#[allow(dead_code)]
 fn get_rgb(r: u8, g: u8, b: u8) -> u8 {
     let mut closest_color: (i16, usize) = (-1, 999999);
 
@@ -256,16 +259,73 @@ fn get_pixel_index(x: usize, y: usize) -> usize {
     x + y * BUFFER_WIDTH
 }
 
+fn draw_character(buffer: &mut Buffer, character: u8, x: usize, y: usize) {
+    let characters = CHARACTERS[character as usize];
+
+    for char in characters.iter().enumerate() {
+        if char.1 == &true {
+            buffer.pixels[get_pixel_index(x + char.0 % 5, y + char.0 / 5)].write(15);
+        } else {
+            buffer.pixels[get_pixel_index(x + char.0 % 5, y + char.0 / 5)].write(0);
+        }
+    }
+}
+
+fn clear_characters(buffer: &mut Buffer, terminal_buffer: &mut [[u8; 25]; 19], line: usize) {
+    for i in 0..24 {
+        draw_character(buffer, 0, 9 + i * 6, 183 - 10 * line);
+        terminal_buffer[line][i] = 0;
+    }
+}
+
+fn shift_characters(buffer: &mut Buffer, terminal_buffer: &mut [[u8; 25]; 19]) {
+    for line in 1..19 {
+        for i in 0..24 {
+            let character = terminal_buffer[18 - line][i];
+            terminal_buffer[19 - line][i] = character;
+            draw_character(buffer, character, 9 + i * 6, 183 - 10 * (19 - line));
+            //draw_character(buffer, 100, 9 + i * 6, 183 - 10 * (line + 1));
+        }
+    }
+    clear_characters(buffer, terminal_buffer, 0);
+}
+
 pub fn init() {
-    let buffer = unsafe { &mut *(0xa0000 as *mut Buffer) };
-    let frames = [(0, 0, 160, 100); 4];
+    let buffer: &mut Buffer = unsafe { &mut *(0xa0000 as *mut Buffer) };
+    
+    let _frames = [(0, 0, 160, 100); 4];
+
     for x in 0..BUFFER_WIDTH {
         for y in 0..BUFFER_HEIGHT {
             if x > 160 {
-                buffer.pixels[get_pixel_index(x, y)].write(get_next_color((x * y) as u8, 0, 0));
+                buffer.pixels[get_pixel_index(x, y)].write(get_next_color());
             } else {
-                buffer.pixels[get_pixel_index(x, y)].write(get_rgb((x as i32 * 1.5 as i32) as u8, (y as i32 * 1.2 as i32) as u8, 0 as u8));
+                buffer.pixels[get_pixel_index(x, y)].write(0);
             }
         }
+    }
+
+    let terminal_line = "hello world\nthis is a line of text\ngood day yall\nblack jack is overrated\ni will give you a medal\npot dor dot\ni have a question\nzen browser";
+
+    let mut terminal_column_position = 0;
+    let mut terminal_buffer: [[u8; 25]; 19] = [[0; 25]; 19];
+
+    for char in terminal_line.bytes() {
+        let mut char_writing = char;
+        if char == b'\n' {
+            shift_characters(buffer, &mut terminal_buffer);
+            terminal_column_position = 0;
+            continue;
+        }
+        if terminal_column_position == 24 {
+            shift_characters(buffer, &mut terminal_buffer);
+            terminal_column_position = 0;
+        }
+        if char_writing >= CHARACTERS.len() as u8 {
+            char_writing = 0;
+        }
+        draw_character(buffer, char_writing,  9 + terminal_column_position * 6, 183);
+        terminal_buffer[0][terminal_column_position] = char_writing;
+        terminal_column_position += 1;
     }
 }

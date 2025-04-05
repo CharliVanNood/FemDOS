@@ -8,6 +8,7 @@ mod vga;
 mod window;
 mod input;
 mod applications;
+mod renderer;
 mod vec;
 mod filesystem;
 mod disk;

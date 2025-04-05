@@ -11,6 +11,7 @@ pub mod interrupts;
 pub mod gdt;
 pub mod input;
 pub mod applications;
+pub mod renderer;
 pub mod filesystem;
 pub mod vec;
 pub mod disk;
