@@ -1,4 +1,4 @@
-use crate::{alloc, applications::femc, info, print, println, vec::FileVec};
+use crate::{alloc, applications::basic, info, print, println, vec::FileVec};
 
 use lazy_static::lazy_static;
 use spin::Mutex;
@@ -27,7 +27,7 @@ impl FileSystem {
     pub fn create_file(&mut self, parent: i32, filename: [u8; 20], data: &str) {
         let data_bytes = data.bytes();
 
-        let address = alloc::alloc(8192);
+        let address = alloc::alloc(2048);
 
         let mut index = 0;
         for i in data_bytes {
@@ -158,30 +158,49 @@ pub fn run_file(name: [u8; 20]) {
     let file_start = file.2.0;
     let file_size = file.2.2;
 
-    let mut file_data: [u8; 256] = [0; 256];
+    let mut file_data: [u8; 512] = [0; 512];
     for i in 0..file_size {
         let byte = alloc::read_byte(file_start + i * 8) as u8;
         file_data[i] = byte;
     }
 
-    femc::exec(file_data);
+    //femc::exec(file_data);
+    basic::exec(file_data);
 }
 
 pub fn install_base_os() {
     println!("Installing FemDOS");
     create_file(1, "file1", "fc", "Hello world");
-    //create_file(1, "file2", "This is amazing");
-    //create_file(1, "file3", "This is a text file");
-    //create_file(1, "flow1", "");
-    //create_file(1, "flow2", "");
-    //create_file(6, "hidden file", "WOW YOU FOUND ME");
-    //create_file(6, "hidden file", "print 1 + 1");
     create_file(1, "python1", "fc", "print 1 + 10 * 10\nprint 10 + 10\ntest = 10\ntest2 = 20\nprint test\nprint test2");
-    //create_file(1, "python2", "print 1 + 10 * 10");
     create_file(1, "loop_test_1", "fc", "do\nprint 10\nrepeat 10");
     create_file(1, "loop_test_2", "fc", "do\nprint 10\nrepeat 0\ndo\nprint 5\nrepeat 10");
     create_file(1, "if_test_1", "fc", "if 10 == 10\nprint 10\nend\nif 10 == 5\nprint 5\nend");
     create_file(1, "color_test_1", "fc", "color 1 1");
     create_file(1, "color_test_2", "fc", "color 11 11\nprint true\ncolor 13 13\nprint true\ncolor 15 15\nprint true\ncolor 13 13\nprint true\ncolor 11 11\nprint true\ncolor 15 0");
-    create_file(1, "basic", "b", "PRINT TEST");
+    create_file(1, "basic_mul", "b", "PRINT 2 * 2;");
+    create_file(1, "basic_add", "b", "PRINT 2 + 2;");
+    create_file(1, "basic_div", "b", "PRINT 2 / 2;");
+    create_file(1, "basic_sub", "b", "PRINT 2 - 2;");
+
+    create_file(1, "basic", "b", "
+    PRINT TRUE
+    PRINT FALSE
+    PRINT TRUE
+    PRINT \"test\"
+    ' INPUT
+    ' PRINT \"test\"
+    PRINT 1 == 2
+    PRINT 1 == 1
+    PRINT NOT TRUE
+    PRINT NOT FALSE
+
+    a = 20
+    b = 10
+    PRINT a
+    PRINT a == b
+    PRINT a + b
+    PRINT a - b
+    PRINT a / b
+    PRINT a * b
+    ");
 }

@@ -26,8 +26,16 @@ Win64: https://qemu.weilnetz.de/w64/
 Arch: `sudo pacman -S qemu` (system, not base)  
 Ubuntu: `sudo apt install qemu-system`  
 
-# Continue if you're on Windows
+## Continue if you're on Windows
 - Add QEMU to the enviroment variables  
 First find the path, normally this is in `C:\Program Files\qemu`
 In powershell you could run the command `[System.Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Program Files\qemu", [System.EnvironmentVariableTarget]::Machine)`  
 Or just open the enviroment variables and add `C:\Program Files\qemu` to `Path`
+
+# Setting up Qemu
+- Create disk image  
+`qemu-img create -f raw hdd.img 1024M`
+
+# Running
+- For compiling the project youself use  
+`cargo run`  

@@ -5,6 +5,7 @@
 #![reexport_test_harness_main = "test_main"]
 
 mod vga;
+mod window;
 mod input;
 mod applications;
 mod vec;
@@ -25,6 +26,7 @@ const VERSION: &str = env!("VERSION");
 #[no_mangle]
 pub extern "C" fn _start(boot_info: &'static BootInfo) -> ! {
     vga::clear_screen();
+
     println!("--------------------------------------");
     println!("| This is my silly operating system: |");
     println!("| FemDOS!                            |");
@@ -34,11 +36,7 @@ pub extern "C" fn _start(boot_info: &'static BootInfo) -> ! {
     println!("| Memory offset: 0x{:x}       |", boot_info.physical_memory_offset);
     println!("--------------------------------------");
 
-    // dissabled, this is not working for me yet
-    //disk::check_mbr();
-    //disk::test();
-
-    alloc::set_heap(boot_info.physical_memory_offset as usize, 0x5000000);
+    alloc::set_heap(boot_info.physical_memory_offset as usize + 0x8a5000, 0x7fe0000 - 0x8a5000);
     fem_dos::init(boot_info);
 
     println!("Done initializing components!");
@@ -55,13 +53,69 @@ pub extern "C" fn _start(boot_info: &'static BootInfo) -> ! {
         warnln!("[AWW] Ram test failed :c");
     }
 
-    //ram_test(boot_info.physical_memory_offset as usize, 0x100000);
+    disk::print_ring();
+
+    let sectors = disk::get_sector_count();
+    println!("Amount of sectors: {}", sectors);
+    println!("Disk size: {} MB", sectors as u64 * 512 / 1024 / 1024);
+
+    let mut read_buffer = [0u16; 256];
+    disk::read_sector(0, &mut read_buffer);
+
+    let write_buffer = [0xABCDu16; 256];
+    disk::write_sector(1, &write_buffer);
+    disk::read_sector(1, &mut read_buffer);
+    let write_successfull = read_buffer == [0xABCDu16; 256];
+    if write_successfull {
+        infoln!("[YAY] Disk write sector 1 was successfull :D");
+    } else {
+        warnln!("[AWW] Disk write sector 1 failed :c");
+    }
+
+    let write_buffer = [0x1234u16; 256];
+    disk::write_sector(2, &write_buffer);
+    disk::read_sector(2, &mut read_buffer);
+    let write_successfull = read_buffer == [0x1234u16; 256];
+    if write_successfull {
+        infoln!("[YAY] Disk write sector 2 was successfull :D");
+    } else {
+        warnln!("[AWW] Disk write sector 2 failed :c");
+    }
+
+    let write_buffer = [0x5678u16; 256];
+    disk::write_sector(3, &write_buffer);
+    disk::read_sector(3, &mut read_buffer);
+    let write_successfull = read_buffer == [0x5678u16; 256];
+    if write_successfull {
+        infoln!("[YAY] Disk write sector 3 was successfull :D");
+    } else {
+        warnln!("[AWW] Disk write sector 3 failed :c");
+    }
+
+    let write_buffer = [0x1369u16; 256];
+    disk::write_sector(4, &write_buffer);
+    disk::read_sector(4, &mut read_buffer);
+    let write_successfull = read_buffer == [0xABCDu16; 256];
+    if write_successfull {
+        infoln!("[YAY] Disk write sector 4 was successfull (Which should not be possible!)");
+    } else {
+        warnln!("[AWW] Disk write sector 4 failed (This was supposed to happen)");
+    }
+
+    /*for region in boot_info.memory_map.iter() {
+        println!(
+            "Address is mapped as {:?} at {:x} to {:x}",
+            region.region_type, region.range.start_addr(), region.range.end_addr()
+        );
+    }*/
 
     println!("Done testing!");
 
     println!("--------------------------------------");
     println!("| Yippee FemDOS has booted!          |");
     println!("--------------------------------------");
+
+    //window::init();
 
     fem_dos::hlt_loop();
 }

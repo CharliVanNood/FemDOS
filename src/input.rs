@@ -1,5 +1,5 @@
 use crate::alloc;
-use crate::clock::print_time;
+use crate::clock;
 use crate::{print, println, warnln};
 use crate::vga;
 use crate::applications;
@@ -9,6 +9,26 @@ use spin::Mutex;
 lazy_static::lazy_static! {
     static ref CURRENT_TEXT: Mutex<[u8; 256]> = Mutex::new([0; 256]);
     static ref CURRENT_TEXT_END: Mutex<usize> = Mutex::new(0);
+    pub static ref KEYPRESSES: Mutex<([u8; 8], u8)> = Mutex::new(([0; 8], 0));
+}
+
+#[allow(dead_code)]
+pub fn check_events() {
+    let time = clock::get_time();
+    vga::set_header(time);
+
+    let keypresses = {
+        let lock = KEYPRESSES.lock();
+        lock.clone()
+    };
+
+    for keypress in keypresses.0 {
+        if keypress == 0 { break; }
+        add_key(keypress);
+    }
+
+    KEYPRESSES.lock().0 = [0; 8];
+    KEYPRESSES.lock().1 = 0;
 }
 
 #[allow(dead_code)]
@@ -24,15 +44,15 @@ pub fn get_text() -> [u8; 256] {
 }
 
 #[allow(dead_code)]
-pub fn add_key(character: u8) -> bool {
+pub fn add_key(character: u8) {
     match character {
         10 => {
             match_commands();
-            return false;
+            return;
         },
         8 => {
             remove_byte();
-            return false;
+            return;
         }
         _ => {}
     }
@@ -43,10 +63,7 @@ pub fn add_key(character: u8) -> bool {
     if *text_end < 255 {
         text[*text_end] = character;
         *text_end += 1;
-        true
-    } else {
-        println!("You're at the typing limit :c");
-        false
+        print!("{}", character as char);
     }
 }
 
@@ -65,6 +82,7 @@ fn print_help_command() {
     println!("\nWe have these general commands");
     println!("   [ping]             - Just a simple test command");
     println!("   [femc] [code]      - Run femc commands");
+    println!("   [basic] [code]     - Run BASIC commands");
     println!("   [color]            - Toggle the background color");
     println!("   [clear]            - Clear the screen");
     println!("   [fl]               - Show the items in the current flow");
@@ -72,12 +90,19 @@ fn print_help_command() {
     println!("   [pong]             - The game pong");
     println!("   [cat]              - Read a file");
     println!("   [time]             - Time will show you the current time according to bios");
-    println!("   [per]              - Performance will show you system details\n");
+    println!("   [timeset] [hour]   - Timeset will set the current hour");
+    println!("   [per]              - Performance will show you system details");
+    println!("   [run] [file name]  - Run runs the actual files");
+    println!("   [nyo] [message]    - Chat with the o so amazing nyo :D\n");
 }
 
 #[allow(dead_code)]
 pub fn match_commands() {
-    let commands = ["info", "ping", "color", "clear", "help", "femc", "fl", "go", "install", "pong", "cat", "run", "per", "time"];
+    let commands = [
+        "info", "ping", "color", "clear", "help", "femc", "fl", "go", 
+        "install", "pong", "cat", "run", "per", "time", "input", "timeset",
+        "basic", "nyo", "screen", "char"
+        ];
 
     print!("\n");
 
@@ -121,6 +146,14 @@ pub fn match_commands() {
                     print!("\n");
                 },
                 "femc" => applications::femc::exec(command_written),
+                "basic" => {
+                    let mut command_written_512 = [0u8; 512];
+                    command_written_512[..256].copy_from_slice(&command_written);
+                    applications::basic::exec(command_written_512)
+                },
+                "nyo" => {
+                    applications::nyo::query_nyo(command_written);
+                }
                 "fl" => filesystem::print_current_dir_files(),
                 "go" => {
                     let mut name = [0; 20];
@@ -169,10 +202,34 @@ pub fn match_commands() {
                     println!("   {} Bytes / {} Bytes", ram_usage.0, ram_usage.1);
                     println!("   {} KB / {} KB", ram_usage.0 / 1000, ram_usage.1 / 1000);
                     println!("   {} MB / {} MB\n", ram_usage.0 / 1000000, ram_usage.1 / 1000000);
+                    println!("   Disk: 0%\n");
                 },
                 "time" => {
-                    print_time();
+                    clock::print_time();
                 },
+                "timeset" => {
+                    let mut time = [0; 3];
+                    let mut time_len = 0;
+
+                    for byte_index in 8..23 {
+                        let byte = command_written[byte_index];
+                        if byte == 0 { break; }
+                        time[time_len] = byte as u8;
+                        time_len += 1;
+                    }
+
+                    let mut time_number = 0;
+
+                    for byte in time.iter().enumerate() {
+                        if *byte.1 == 0 { break; }
+                        let byte_number = *byte.1 as i32 - 48;
+                        time_number += byte_number * 10_i32.pow((time_len - byte.0 - 1) as u32);
+                    }
+
+                    clock::set_time(time_number as u8);
+                },
+                "input" => println!("neh"),
+                "char" => println!("Character code: {}", command_written[5]),
                 _ => warnln!("This command is unimplemented :C")
             }
         }
