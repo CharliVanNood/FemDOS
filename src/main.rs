@@ -34,10 +34,10 @@ pub extern "C" fn _start(boot_info: &'static BootInfo) -> ! {
     println!("|                                    |");
     println!("| Data:                              |");
     println!("| Version: {}                  |", VERSION);
-    println!("| Memory offset: 0x{:x}       |", boot_info.physical_memory_offset);
+    println!("| Memory offset: 0x{:x}       |", boot_info.physical_memory_offset.into_option().unwrap());
     println!("--------------------------------------");
 
-    alloc::set_heap(boot_info.physical_memory_offset as usize, 0x5000000);
+    alloc::set_heap(boot_info.physical_memory_offset.into_option().unwrap() as usize, 0x5000000);
     fem_dos::init(boot_info);
 
     println!("Done initializing components!");
