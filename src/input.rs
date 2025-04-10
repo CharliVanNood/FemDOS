@@ -1,5 +1,6 @@
 use crate::alloc;
 use crate::clock;
+use crate::window;
 use crate::{print, println, warnln};
 use crate::vga;
 use crate::applications;
@@ -140,7 +141,7 @@ pub fn match_commands() {
                     print!("\n");
                 },
                 "clear" => {
-                    vga::clear_screen();
+                    window::clear_screen();
                     print!("The screen has been cleared");
                     print!("\n");
                 },

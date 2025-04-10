@@ -26,7 +26,8 @@ const VERSION: &str = env!("VERSION");
 
 #[no_mangle]
 pub extern "C" fn _start(boot_info: &'static BootInfo) -> ! {
-    vga::clear_screen();
+    window::init();
+    window::clear_screen();
 
     println!("--------------------------------------");
     println!("| This is my silly operating system: |");
@@ -108,8 +109,6 @@ pub extern "C" fn _start(boot_info: &'static BootInfo) -> ! {
     println!("--------------------------------------");
     println!("| Yippee FemDOS has booted!          |");
     println!("--------------------------------------");
-
-    window::init();
 
     fem_dos::hlt_loop();
 }

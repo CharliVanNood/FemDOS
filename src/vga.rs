@@ -5,10 +5,10 @@ use spin::Mutex;
 use core::fmt::Write;
 use x86_64::instructions::interrupts;
 
-#[macro_export]
+/*#[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => ($crate::vga::_print(format_args!($($arg)*)));
-}
+}*/
 
 #[macro_export]
 macro_rules! warn {
@@ -20,11 +20,11 @@ macro_rules! info {
     ($($arg:tt)*) => ($crate::vga::_info(format_args!($($arg)*)));
 }
 
-#[macro_export]
+/*#[macro_export]
 macro_rules! println {
     () => ($crate::print!("\n"));
     ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
-}
+}*/
 
 #[macro_export]
 macro_rules! warnln {
@@ -38,12 +38,12 @@ macro_rules! infoln {
     ($($arg:tt)*) => ($crate::info!("{}\n", format_args!($($arg)*)));
 }
 
-#[doc(hidden)]
+/*#[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     interrupts::without_interrupts(|| {
         WRITER.lock().write_fmt(args).unwrap();
     });
-}
+}*/
 
 #[doc(hidden)]
 pub fn _warn(args: fmt::Arguments) {
@@ -82,12 +82,6 @@ pub fn remove_byte() {
 
 pub fn set_header(time: (u8, u8, u8)) {
     WRITER.lock().set_header(time);
-}
-
-pub fn clear_screen() {
-    for _ in 0..100 {
-        println!("");
-    }
 }
 
 impl fmt::Write for Writer {
