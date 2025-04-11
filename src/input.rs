@@ -2,10 +2,10 @@ use crate::alloc;
 use crate::clock;
 use crate::window;
 use crate::{print, println, warnln};
-use crate::vga;
 use crate::applications;
 use crate::filesystem;
 use spin::Mutex;
+use crate::window::render_image;
 
 lazy_static::lazy_static! {
     static ref CURRENT_TEXT: Mutex<[u8; 256]> = Mutex::new([0; 256]);
@@ -16,7 +16,7 @@ lazy_static::lazy_static! {
 #[allow(dead_code)]
 pub fn check_events() {
     let time = clock::get_time();
-    vga::set_header(time);
+    window::draw_menu_bar(time);
 
     let keypresses = {
         let lock = KEYPRESSES.lock();
@@ -75,25 +75,26 @@ fn remove_byte() {
     if *text_end > 0 {
         *text_end -= 1;
         text[*text_end] = 0;
-        vga::remove_byte();
+        window::remove_terminal_character();
     }
 }
 
 fn print_help_command() {
     println!("\nWe have these general commands");
-    println!("   [ping]             - Just a simple test command");
-    println!("   [femc] [code]      - Run femc commands");
-    println!("   [basic] [code]     - Run BASIC commands");
-    println!("   [color]            - Toggle the background color");
-    println!("   [clear]            - Clear the screen");
-    println!("   [fl]               - Show the items in the current flow");
-    println!("   [go] [flow name]   - Change to a different flow");
-    println!("   [pong]             - The game pong");
-    println!("   [cat]              - Read a file");
-    println!("   [time]             - Time will show you the current time according to bios");
-    println!("   [timeset] [hour]   - Timeset will set the current hour");
-    println!("   [per]              - Performance will show you system details");
-    println!("   [run] [file name]  - Run runs the actual files\n");
+    println!("[ping] - Pong");
+    println!("[femc] [code] - FemC");
+    println!("[basic] [code] - BASIC");
+    println!("[color] - Toggle color");
+    println!("[clear] - Clear screen");
+    println!("[fl] - Show flow files");
+    println!("[go] [flow] - Change flow");
+    println!("[pong] - The game pong");
+    println!("[cat] - Read a file");
+    println!("[time] - Shows time");
+    println!("[timeset] [hour] - Set the current hour");
+    println!("[per] - Performance");
+    println!("[run] [file] - Run code");
+    println!("[nyo] [message] - NyoBot");
 }
 
 #[allow(dead_code)]
@@ -101,7 +102,7 @@ pub fn match_commands() {
     let commands = [
         "info", "ping", "color", "clear", "help", "femc", "fl", "go", 
         "install", "pong", "cat", "run", "per", "time", "input", "timeset",
-        "basic", "screen"
+        "basic", "nyo", "screen", "char", "imagine"
         ];
 
     print!("\n");
@@ -132,11 +133,11 @@ pub fn match_commands() {
                 "ping" => println!("Pong"),
                 "color" => {
                     print!("Changed the color to black");
-                    let color = vga::get_color();
+                    let color = window::get_terminal_color();
                     if color == 15 {
-                        vga::set_color(13, 0);
+                        window::set_terminal_color(13, 0);
                     } else {
-                        vga::set_color(13, 15);
+                        window::set_terminal_color(13, 15);
                     }
                     print!("\n");
                 },
@@ -151,6 +152,9 @@ pub fn match_commands() {
                     command_written_512[..256].copy_from_slice(&command_written);
                     applications::basic::exec(command_written_512)
                 },
+                "nyo" => {
+                    applications::nyo::query_nyo(command_written);
+                }
                 "fl" => filesystem::print_current_dir_files(),
                 "go" => {
                     let mut name = [0; 20];
@@ -226,6 +230,21 @@ pub fn match_commands() {
                     clock::set_time(time_number as u8);
                 },
                 "input" => println!("neh"),
+                "char" => println!("Character code: {}", command_written[5]),
+                "imagine" => {
+                    let mut name = [0; 20];
+                    let mut name_len = 0;
+
+                    for byte_index in 8..27 {
+                        let byte = command_written[byte_index];
+                        if byte == 0 { break; }
+                        name[name_len] = byte as u8;
+                        name_len += 1;
+                    }
+
+                    let image_data = filesystem::read_image(name);
+                    render_image(image_data);
+                }
                 _ => warnln!("This command is unimplemented :C")
             }
         }

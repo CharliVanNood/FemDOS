@@ -1,4 +1,4 @@
-use crate::{println, string::BigString, vga, warnln};
+use crate::{println, string::BigString, window, warnln};
 
 pub fn exec(input: [u8; 256]) {
     let mut input_string = BigString::from_b256(input);
@@ -537,7 +537,7 @@ fn run_tokens_last(
             (29, true) =>  {
                 match (tokens[token_index + 1].0, tokens[token_index + 2].0) {
                     (1, 1) => {
-                        vga::set_color(tokens[token_index + 1].1 as u8, tokens[token_index + 2].1 as u8);
+                        window::set_terminal_color(tokens[token_index + 1].1 as u8, tokens[token_index + 2].1 as u8);
                     }
                     _ => warnln!("This is an unsupported type conversion")
                 }
@@ -650,21 +650,30 @@ fn tokenize(input: BigString) -> [[(u8, i32); 255]; 32] {
     let mut temp_token = [0; 64];
     let mut temp_token_index = 0;
 
+    let mut is_comment = false;
+
     let mut variables = [[0; 64]; 64];
 
     for char_index in 0..input.len() {
         let char = input.get(char_index);
         if char == 0 { continue; }
+        if char == b'#' as usize {
+            is_comment = true;
+            continue;
+        }
         if char == 32 {
             let token = match_token(temp_token, variables);
             variables = token.2;
             if token.0 == 8 {
+                is_comment = false;
                 line += 1;
                 tokens_index = 0;
                 temp_token = [0; 64];
                 temp_token_index = 0;
             } else {
-                lines[line][tokens_index] = (token.0, token.1);
+                if !is_comment {
+                    lines[line][tokens_index] = (token.0, token.1);
+                }
                 tokens_index += 1;
                 temp_token = [0; 64];
                 temp_token_index = 0;
@@ -675,7 +684,7 @@ fn tokenize(input: BigString) -> [[(u8, i32); 255]; 32] {
         }
     }
     let token = match_token(temp_token, variables);
-    if token.0 != 8 {
+    if token.0 != 8 && !is_comment {
         lines[line][tokens_index] = (token.0, token.1);
     }
 
