@@ -1,4 +1,4 @@
-use crate::{print, vga};
+use crate::{print, window};
 
 pub struct Pong {
     _ball_velocity: [i8; 2],
@@ -22,12 +22,12 @@ impl Pong {
                 if x == 1 && (y - 12 < self.pos_left + 4 && y - 12 > self.pos_left - 4) || 
                     x == 78 && (y - 12 < self.pos_left + 4 && y - 12 > self.pos_left - 4) || 
                     (x - 39 == self.ball_position[0] && y - 12 == self.ball_position[1]) {
-                    vga::set_color(15, 15);
-                } else { vga::set_color(15, 13); }
+                    window::set_terminal_color(15, 15);
+                } else { window::set_terminal_color(15, 13); }
                 print!(" ");
             }
         }
-        vga::set_color(13, 15);
+        window::set_terminal_color(13, 15);
     }
 }
 

@@ -9,7 +9,7 @@ use spin::Mutex;
 use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
 use x86_64::instructions::port::Port;
 
-use crate::print;
+//use crate::print;
 use crate::gdt;
 use crate::input;
 //use crate::disk;
@@ -110,8 +110,14 @@ extern "x86-interrupt" fn keyboard_interrupt_handler(
             match key {
                 DecodedKey::Unicode(character) => {
                     let byte = character as u8;
-                    if input::add_key(byte) {
-                        print!("{}", character)
+                    {
+                        let mut keypresses = input::KEYPRESSES.lock();
+                        let keypress_index = keypresses.1;
+                        keypresses.0[keypress_index as usize] = byte;
+                        keypresses.1 += 1;
+                        if keypresses.1 > 7 {
+                            keypresses.1 = 7;
+                        }
                     }
                 },
                 DecodedKey::RawKey(_) => {},

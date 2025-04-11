@@ -5,11 +5,12 @@
 #![reexport_test_harness_main = "test_main"]
 #![feature(abi_x86_interrupt)]
 
-pub mod vga;
+pub mod window;
 pub mod interrupts;
 pub mod gdt;
 pub mod input;
 pub mod applications;
+pub mod renderer;
 pub mod filesystem;
 pub mod vec;
 pub mod disk;
@@ -75,12 +76,13 @@ pub fn hlt_loop() -> ! {
     print!("-> ");
     loop {
         x86_64::instructions::hlt();
+        input::check_events();
     }
 }
 
 pub fn init(boot_info: &'static BootInfo) {
     println!("Setting heap offset");
-    alloc::set_heap(boot_info.physical_memory_offset as usize, 0x5000000);
+    alloc::set_heap(boot_info.physical_memory_offset as usize + 0x8a5000, 0x7fe0000 - 0x8a5000);
 
     println!("Creating root directory");
     filesystem::create_file(-1, "root", "", "");

@@ -5,7 +5,7 @@ edition = "2018"
 build = "build.rs"
 
 [dependencies]
-bootloader = { version = "0.9", features = ["map_physical_memory"]}
+bootloader = { version = "0.9", features = ["map_physical_memory", "vga_320x200"]}
 volatile = "0.2.6"
 uart_16550 = "0.2.0"
 x86_64 = "0.14.2"
