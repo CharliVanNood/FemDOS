@@ -1,5 +1,5 @@
 // yes I did do this myself, I know there might be a lookup table out there, but I decided to take the tedious route, why else would I make an OS
-pub const COLOR_PALETTE: [(u8, u8, u8); 216] = [
+pub const COLOR_PALETTE: [(u8, u8, u8); 217] = [
     (0, 0, 0),
     (0, 0, 170),
     (0, 170, 0),
@@ -11,6 +11,7 @@ pub const COLOR_PALETTE: [(u8, u8, u8); 216] = [
     (87, 87, 87),
     (87, 87, 255),
     (87, 255, 87),
+    (87, 255, 255),
     (255, 87, 87),
     (255, 87, 255),
     (255, 255, 87),

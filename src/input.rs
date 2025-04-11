@@ -48,7 +48,7 @@ pub fn get_text() -> [u8; 256] {
 pub fn add_key(character: u8) {
     match character {
         10 => {
-            match_commands();
+            match_commands(get_text(), true);
             return;
         },
         8 => {
@@ -98,11 +98,11 @@ fn print_help_command() {
 }
 
 #[allow(dead_code)]
-pub fn match_commands() {
+pub fn match_commands(command_written:[u8; 256], user_ran:bool) {
     let commands = [
         "info", "ping", "color", "clear", "help", "femc", "fl", "go", 
         "install", "pong", "cat", "run", "per", "time", "input", "timeset",
-        "basic", "nyo", "screen", "char", "imagine"
+        "basic", "nyo", "screen", "char", "imagine", "imgtest"
         ];
 
     print!("\n");
@@ -111,7 +111,6 @@ pub fn match_commands() {
     for command in commands {
         let command_bytes = command.bytes();
         let command_length = command_bytes.len();
-        let command_written = get_text();
         let mut is_command = true;
 
         let mut i = 0;
@@ -244,6 +243,22 @@ pub fn match_commands() {
 
                     let image_data = filesystem::read_image(name);
                     render_image(image_data);
+                },
+                "imgtest" => {
+                    let mut install: [u8; 256] = [0; 256];
+                    let mut i = 0;
+                    for byte in "install".bytes() {
+                        install[i] = byte;
+                        i += 1;
+                    }
+                    let mut imagine: [u8; 256] = [0; 256];
+                    let mut i = 0;
+                    for byte in "imagine smiley".bytes() {
+                        imagine[i] = byte;
+                        i += 1;
+                    }
+                    match_commands(install,false);
+                    match_commands(imagine,false)
                 }
                 _ => warnln!("This command is unimplemented :C")
             }
@@ -253,7 +268,7 @@ pub fn match_commands() {
         warnln!("This command does not seem to exist :C");
     }
 
-    print!("-> ");
+    if user_ran { print!("-> ") }
 
     {
         let mut text = CURRENT_TEXT.lock();
