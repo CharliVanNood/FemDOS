@@ -5,12 +5,12 @@
 #![reexport_test_harness_main = "test_main"]
 #![feature(abi_x86_interrupt)]
 
-pub mod vga;
 pub mod window;
 pub mod interrupts;
 pub mod gdt;
 pub mod input;
 pub mod applications;
+pub mod renderer;
 pub mod filesystem;
 pub mod vec;
 pub mod disk;

@@ -103,8 +103,8 @@ pub fn print_ring() {
     let ring = check_ring();
 
     match ring {
-        0 => infoln!("[YAY] Current ring: 0 (Kernel)"),
-        3 => warnln!("[AWW] Current ring: 0 (User)"),
-        _ => warnln!("[AWW] Current ring: {} (Likely protected)", ring)
+        0 => infoln!("[YAY] Current ring: 0"),
+        3 => warnln!("[AWW] Current ring: 3"),
+        _ => warnln!("[AWW] Current ring: {}", ring)
     }
 }

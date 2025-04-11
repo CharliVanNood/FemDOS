@@ -13,7 +13,7 @@ pub struct BigString {
 impl BigString {
     #[allow(dead_code)]
     pub fn new() -> Self {
-        let heap_start = alloc::alloc(2048);
+        let heap_start = alloc::alloc(8192);
         Self {
             size: 0,
             heap_start: heap_start.0,
@@ -24,7 +24,7 @@ impl BigString {
 
     #[allow(dead_code)]
     pub fn from(value: &str) -> Self {
-        let heap_start = alloc::alloc(2048);
+        let heap_start = alloc::alloc(8192);
         let mut size = 0;
 
         for byte in value.bytes() {
@@ -137,6 +137,14 @@ impl BigString {
     }
 
     #[allow(dead_code)]
+    pub fn set_add(&mut self, address: usize, value: usize) {
+        if address * 8 >= self.size {
+            self.size = (address + 1) * 8;
+        }
+        alloc::write_byte(self.heap_start + address * 8, value);
+    }
+
+    #[allow(dead_code)]
     pub fn len(&self) -> usize {
         self.size / 8
     }
@@ -189,11 +197,13 @@ impl BigString {
         let needle_end = needle_index as usize + needle.bytes().len();
         let offset = value.bytes().len() as i16 - needle.bytes().len() as i16;
 
+        self.size += offset as usize * 8;
+
         for moving in 0..self.len() - needle_end {
             if self.size as i16 / 8 - moving as i16 - offset < 0 {
                 continue;
             }
-            self.set(self.size / 8 - moving, self.get((self.size as i16 / 8 - moving as i16 - offset) as usize));
+            self.set(self.len() - moving, self.get((self.len() as i16 - moving as i16 - offset) as usize));
         }
         for byte in value.bytes().enumerate() {
             self.set(needle_index as usize + byte.0, byte.1 as usize);

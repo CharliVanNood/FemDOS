@@ -1,4 +1,4 @@
-use crate::{println, string::BigString, vga, warnln};
+use crate::{println, string::BigString, window, warnln};
 
 pub fn exec(input: [u8; 256]) {
     let mut input_string = BigString::from_b256(input);
@@ -537,7 +537,7 @@ fn run_tokens_last(
             (29, true) =>  {
                 match (tokens[token_index + 1].0, tokens[token_index + 2].0) {
                     (1, 1) => {
-                        vga::set_color(tokens[token_index + 1].1 as u8, tokens[token_index + 2].1 as u8);
+                        window::set_terminal_color(tokens[token_index + 1].1 as u8, tokens[token_index + 2].1 as u8);
                     }
                     _ => warnln!("This is an unsupported type conversion")
                 }

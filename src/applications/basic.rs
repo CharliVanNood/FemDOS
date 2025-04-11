@@ -13,9 +13,11 @@ pub fn exec(input: [u8; 512]) {
 
 fn match_token(token: [u8; 64], variables: [Vec; 64]) -> (usize, usize, [Vec; 64]) {
     let tokens_val = [
-        "PRINT", "\n", "lnnew", "TRUE", "FALSE", "+", "-", "/", "*", "INPUT", "lnlist", "==", "NOT", "="];
+        "PRINT", "\n", "lnnew", "TRUE", "FALSE", "+", "-", "/", "*", "INPUT", "lnlist", "==", "NOT", "=",
+        "DO", "LOOP"];
     let tokens_keys  = [
-         10,      8,    8,       3,      3,       11,  12,  13,  14,  15,      16,       18,   19,    20];
+         10,      8,    8,       3,      3,       11,  12,  13,  14,  15,      16,       18,   19,    20,
+         25,   26];
 
     for command_index in 0..tokens_val.len() {
         let command = tokens_val[command_index];
@@ -117,15 +119,15 @@ fn tokenize(input: BigString) -> ([TokenVec; 128], [TokenVec; 64]) {
     let mut is_string = false;
     let mut is_comment = false;
 
-    let mut variables = [Vec::new(); 64];
-    for i in 1..64 {
-        variables[i] = Vec::new();
-    }
-
     let mut lists = [TokenVec::new(); 64];
     let mut lists_len = 0;
     for i in 1..64 {
         lists[i] = TokenVec::new();
+    }
+
+    let mut variables = [Vec::new(); 64];
+    for i in 1..64 {
+        variables[i] = Vec::new();
     }
 
     for char_index in 0..input.len() {
@@ -191,6 +193,10 @@ fn run_tokens(mut tokens: [TokenVec; 128], mut lists: [TokenVec; 64]) {
     let mut line_index = 0;
     while line_index < tokens.len() {
         let line = tokens[line_index];
+        if line.len() == 0 {
+            line_index += 1;
+            continue;
+        }
 
         let mut indentation_depth: u8 = 0;
         for indentation_layer in indentation.get_as_b64() {
@@ -199,14 +205,18 @@ fn run_tokens(mut tokens: [TokenVec; 128], mut lists: [TokenVec; 64]) {
             }
         }
 
-        let operation_result = run_line(line, &mut indentation, line_index, &mut variables, &mut lists, indentation_depth, running);
+        let line_running = line.copy();
+        let operation_result = run_line(line_running, &mut indentation, line_index, &mut variables, &mut lists, indentation_depth, running);
 
         line_index = operation_result.1;
         running = operation_result.3;
         if operation_result.2 {
-            tokens[line_index] = operation_result.0;
+            //tokens[line_index].remove();
+            tokens[line_index] = operation_result.0.copy();
             line_index = indentation.get(indentation_depth as usize) as usize;
         }
+
+        //line_running.remove();
 
         line_index += 1;
     }
@@ -491,9 +501,9 @@ fn run_tokens_first(mut tokens: TokenVec, _variables: Vec, _lists: [TokenVec; 64
 }
 
 fn run_tokens_last(
-    mut tokens: TokenVec, variables: &mut Vec, lists: &mut [TokenVec; 64], _indentation: &mut Vec, 
-    _indentation_depth: u8, line_index: usize, running: bool) -> (TokenVec, usize, bool, bool) {
-    let return_to_last_indent = false;
+    mut tokens: TokenVec, variables: &mut Vec, lists: &mut [TokenVec; 64], indentation: &mut Vec, 
+    indentation_depth: u8, line_index: usize, mut running: bool) -> (TokenVec, usize, bool, bool) {
+    let mut return_to_last_indent = false;
     
     let mut token_index = 0;
     let mut token_length = tokens.len();
@@ -502,6 +512,15 @@ fn run_tokens_last(
         let token = tokens.get(token_index);
 
         match (token.0, running) {
+            (26, true) | (26, false) => {
+                return_to_last_indent = true;
+                running = true;
+            },
+            (25, true) => {
+                indentation.set_add(indentation_depth as usize + 1, line_index);
+                running = false;
+                tokens.shift(token_index, 1);
+            },
             (20, true) => {
                 match (tokens.get(token_index - 1).0, tokens.get(token_index + 1).0) {
                     (7, 1) => {
@@ -538,7 +557,11 @@ fn run_tokens_last(
                         token_length = tokens.len();
                     }
                     5 => {
-                        lists[tokens.get(token_index + 1).1].print();
+                        let list = lists[tokens.get(token_index + 1).1];
+                        for list_index in 0..list.len() {
+                            print!("{}", list.get(list_index).1 as u8 as char);
+                        }
+                        println!("");
                         tokens.shift(token_index, 2);
                         token_length = tokens.len();
                     }
