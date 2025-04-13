@@ -152,7 +152,7 @@ pub struct BigVec {
 impl BigVec {
     #[allow(dead_code)]
     pub fn new() -> Self {
-        let heap_start = alloc::alloc(131072);
+        let heap_start = alloc::alloc(262144);
         Self {
             size: 0,
             heap_start: heap_start.0,
@@ -174,9 +174,14 @@ impl BigVec {
     #[allow(dead_code)]
     pub fn get(&self, address: usize) -> usize {
         if address * 8 > self.size {
-            warnln!("Address out of range for {} with actual {} :c", address, address * 8);
+            warnln!("Address out of range for {} with bounds {} :c", address * 8, self.heap_end - self.heap_start);
             return 0;
         }
+        alloc::read_byte(self.heap_start + address * 8)
+    }
+
+    #[allow(dead_code)]
+    pub fn get_unsafe(&self, address: usize) -> usize {
         alloc::read_byte(self.heap_start + address * 8)
     }
 

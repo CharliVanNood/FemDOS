@@ -131,7 +131,7 @@ pub extern "C" fn _start(boot_info: &'static BootInfo) -> ! {
     if ram_usage.0 == 8 {
         infoln!("[YAY] Heap vectors");
     } else {
-        warnln!("[AWW] Heap vectors");
+        warnln!("[AWW] Heap vectors {}", ram_usage.0);
     }
 
     println!("Done testing!");

@@ -9,25 +9,108 @@ use crate::alloc::bootinfo::MemoryRegionType;
 pub struct Allocator {
     heap_start: usize,
     heap_end: usize,
-    heap_size: usize,
     next: usize,
+    used: [(usize, usize, bool); 512]
 }
 
 impl Allocator {
     pub fn new(heap_start: usize, heap_size: usize) -> Self {
+        let mut used = [(0, 0, false); 512];
+        used[0] = (heap_start, heap_start + heap_size, true);
+
         Self {
             heap_start,
             heap_end: heap_start + heap_size,
-            heap_size: heap_size,
             next: heap_start,
+            used: used
         }
+    }
+
+    fn _print_regions(&self) {
+        for section_printing in self.used {
+            if section_printing == (0, 0, false) { break; }
+            if section_printing.2 {
+                println!("available: {} {}", section_printing.0 - self.heap_start, section_printing.1 - self.heap_start);
+            } else {
+                warnln!("reserved: {} {}", section_printing.0 - self.heap_start, section_printing.1 - self.heap_start);
+            }
+        }
+    }
+
+    fn section_exists(&self, index: usize) -> bool {
+        if index > self.used.len() {
+            warnln!("Section out of range!");
+            return false;
+        }
+        if self.used[index] == (0, 0, false) {
+            warnln!("Section {} uninitialized!", index);
+            return false;
+        }
+        return true;
+    }
+
+    fn split_section(&mut self, index: usize) {
+        if !self.section_exists(index) { return; }
+
+        let section = self.used[index];
+        let section_size = section.1 - section.0;
+        let section_size_new = section_size / 2 - ((section_size / 2) % 8);
+
+        self.used[index].1 = section.0 + section_size_new;
+
+        for section_new_index in 0..self.used.len() {
+            if self.used[section_new_index] == (0, 0, false) {
+                self.used[section_new_index] = (section.0 + section_size_new, section_size + section.0, true);
+                break;
+            }
+        }
+    }
+
+    fn reserve_section(&mut self, index: usize, size: usize) -> (usize, usize) {
+        if !self.section_exists(index) { return (0, 0); }
+
+        let section = self.used[index];
+        let section_size = section.1 - section.0;
+
+        self.used[index].1 = section.0 + size;
+        self.used[index].2 = false;
+        self.next += size;
+
+        for section_new_index in 0..self.used.len() {
+            if self.used[section_new_index] == (0, 0, false) {
+                self.used[section_new_index] = (section.0 + size, section_size + section.0, true);
+                break;
+            }
+        }
+
+        //self.print_regions();
+
+        (self.used[index].0, self.used[index].0 + self.used[index].1)
+    }
+
+    fn get_largest_section(&self) -> (usize, usize) {
+        let mut largest_section = (0, 0);
+
+        for section in self.used.iter().enumerate() {
+            if section.1 == &(0, 0, false) { break; }
+            let section_size = section.1.1 - section.1.0;
+            if section_size > largest_section.1 && section.1.2 {
+                largest_section = (section.0, section_size);
+            }
+        }
+
+        largest_section
     }
 
     fn set_heap(&mut self, heap_start: usize, heap_size: usize) {
         self.heap_start = heap_start;
         self.heap_end = heap_start + heap_size;
         self.next = heap_start;
-        self.heap_size = heap_size;
+
+        let mut used = [(0, 0, false); 512];
+        used[0] = (heap_start, heap_start + heap_size, true);
+
+        self.used = used;
     }
 
     pub fn alloc(&mut self, size_raw: usize) -> (usize, usize) {
@@ -37,30 +120,26 @@ impl Allocator {
             return (0, 0);
         }
 
-        self.next += size;
-        (self.next - size, self.next)
-    }
+        let largest_section = self.get_largest_section();
 
-    pub fn shift_back(&mut self, heap_start: usize, new_heap_start: usize) {
-        for i in 0..heap_start - new_heap_start {
-            unsafe {
-                let previous_bit = ptr::read((heap_start + i * 8) as *mut usize);
-                ptr::write((new_heap_start + i * 8) as *mut usize, previous_bit);
-            }
+        let mut needs_splitting = false;
+        if largest_section.0 > 0 && self.used[largest_section.0 - 1].2 == false {
+            needs_splitting = true;
         }
-        self.next -= heap_start - new_heap_start;
+
+        if needs_splitting && size < largest_section.1 {
+            self.split_section(largest_section.0);
+        }
+        self.reserve_section(largest_section.0, size)
     }
 
-    pub fn unalloc(&mut self, heap_start: usize, heap_size: usize) {
-        if heap_start + heap_size == self.next {
-            self.next -= heap_size;
-            for i in 0..heap_size {
-                unsafe {
-                    ptr::write((heap_start + i * 8) as *mut usize, 0);
-                }
+    pub fn unalloc(&mut self, heap_start: usize, heap_end: usize) {
+        for section_index in 0..self.used.len() {
+            let section = self.used[section_index];
+            if (section.0, section.1) == (heap_start, heap_end) {
+                self.used[section_index].2 = true;
+                self.next -= heap_end - heap_start;
             }
-        } else {
-            self.shift_back(heap_start + heap_size, heap_start);
         }
     }
 }
@@ -72,8 +151,8 @@ lazy_static! {
 pub fn get_usage() -> (usize, usize) {
     let next = { ALLOCATOR.lock().next };
     let heap_start = { ALLOCATOR.lock().heap_start };
-    let heap_size = { ALLOCATOR.lock().heap_size };
-    (next - heap_start, heap_size)
+    let heap_end = { ALLOCATOR.lock().heap_end };
+    (next - heap_start, heap_end - heap_start)
 }
 
 pub fn set_heap(heap_start: usize, heap_size: usize) {
