@@ -16,7 +16,7 @@ mod alloc;
 mod clock;
 
 use core::panic::PanicInfo;
-use bootloader::BootInfo;
+use bootloader::{bootinfo::MemoryRegionType, BootInfo};
 
 use alloc::{read_byte, write_byte};
 use fem_dos::alloc::alloc;
@@ -36,8 +36,21 @@ pub extern "C" fn _start(boot_info: &'static BootInfo) -> ! {
     println!("Mem Offset: 0x{:x}", boot_info.physical_memory_offset);
     println!("-------------------------");
 
-    alloc::set_heap(boot_info.physical_memory_offset as usize + 0x8a5000, 0x7fe0000 - 0x8a5000);
-    fem_dos::init(boot_info);
+    let mut biggest_region = (0, 0, 0);
+    for region in boot_info.memory_map.iter() {
+        if region.region_type == MemoryRegionType::Usable {
+            let memory_region_size = region.range.end_addr() - region.range.start_addr();
+            println!("FOUND USABLE size {:x}", memory_region_size);
+            if memory_region_size > biggest_region.0 {
+                biggest_region.0 = memory_region_size;
+                biggest_region.1 = region.range.start_addr();
+                biggest_region.2 = region.range.end_addr();
+            }
+        }
+    }
+
+    alloc::set_heap(boot_info.physical_memory_offset as usize + biggest_region.1 as usize, biggest_region.0 as usize);
+    fem_dos::init(boot_info, biggest_region);
 
     println!("Initialized components!");
 
@@ -118,15 +131,8 @@ pub extern "C" fn _start(boot_info: &'static BootInfo) -> ! {
     if ram_usage.0 == 8 {
         infoln!("[YAY] Heap vectors");
     } else {
-        warnln!("[AWW] Heap vectors");
+        warnln!("[AWW] Heap vectors {}", ram_usage.0);
     }
-
-    /*for region in boot_info.memory_map.iter() {
-        println!(
-            "Address is mapped as {:?} at {:x} to {:x}",
-            region.region_type, region.range.start_addr(), region.range.end_addr()
-        );
-    }*/
 
     println!("Done testing!");
 

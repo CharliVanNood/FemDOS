@@ -6,7 +6,7 @@ use spin::Mutex;
 use core::fmt::Write;
 
 use crate::renderer::{colors, text::CHARACTERS};
-use crate::vec::Vec;
+use crate::vec::BigVec;
 
 const BUFFER_WIDTH: usize = 320;
 const BUFFER_HEIGHT: usize = 200;
@@ -286,34 +286,49 @@ fn get_int(numbers: [usize; 3]) -> u8 {
     int_val as u8
 }
 
-pub fn render_image(image_data: Vec) {
+pub fn render_image(image_data: BigVec) {
     let window_offset_x = 160;
+
+    let mut image_width = get_int([image_data.get(0), image_data.get(1), image_data.get(2)]) as usize;
+    let mut image_height = get_int([image_data.get(3), image_data.get(4), image_data.get(5)]) as usize;
 
     let window_width = BUFFER_WIDTH - window_offset_x;
     let window_height = BUFFER_HEIGHT;
-    let image_width = image_data.get(0) - 48;
-    let image_height = image_data.get(2) - 48;
+
+    let mut image_padding_x = 0;
+    if image_width > window_width {
+        image_padding_x = image_width - window_width;
+        image_width = window_width;
+    }
+    if image_height > window_height {
+        image_height = window_height
+    }
+
     let image_start_x = window_width/2 - image_width/2;
     let image_start_y = window_height/2 - image_height/2;
     let image_end_x = image_start_x + image_width;
     let image_end_y = image_start_y + image_height;
-    let mut char = 4;
-
-    let mut screen_writer = SCREEN_WRITER.lock();
+    let mut char = 6;
 
     for y in (0..BUFFER_HEIGHT).rev() {
         if (y >= image_start_y) && (y < image_end_y) {
             for x in 0..window_width {
-                if (x >= image_start_x) && (x < image_end_x) {
-                    let red = get_int([image_data.get(char),image_data.get(char+1),image_data.get(char+2)]);
-                    let green = get_int([image_data.get(char+3),image_data.get(char+4),image_data.get(char+5)]);
-                    let blue = get_int([image_data.get(char+6),image_data.get(char+7),image_data.get(char+8)]);
-                    char += 9;
+                if (x >= image_start_x) && (x < image_end_x + image_padding_x) {
+                    if x < image_end_x {
+                        let red = get_int([image_data.get_unsafe(char),image_data.get_unsafe(char+1),image_data.get_unsafe(char+2)]);
+                        let green = get_int([image_data.get_unsafe(char+3),image_data.get_unsafe(char+4),image_data.get_unsafe(char+5)]);
+                        let blue = get_int([image_data.get_unsafe(char+6),image_data.get_unsafe(char+7),image_data.get_unsafe(char+8)]);
+                        char += 9;
 
-                    let color = screen_writer.get_rgb(red, green, blue);
-                    screen_writer.set_pixel(x+window_offset_x, y, color);
+                        let color = SCREEN_WRITER.lock().get_rgb(red, green, blue);
+                        SCREEN_WRITER.lock().set_pixel(x+window_offset_x, y, color);
+                    } else {
+                        char += 9;
+                    }
                 }
             }
         }
     }
+
+    image_data.remove();
 }
