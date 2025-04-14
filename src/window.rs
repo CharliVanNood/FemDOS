@@ -8,8 +8,8 @@ use core::fmt::Write;
 use crate::renderer::{colors, text::CHARACTERS};
 use crate::vec::BigVec;
 
-const BUFFER_WIDTH: usize = 320;
-const BUFFER_HEIGHT: usize = 200;
+pub const BUFFER_WIDTH: usize = 320;
+pub const BUFFER_HEIGHT: usize = 200;
 
 #[repr(transparent)]
 struct Buffer {
@@ -107,7 +107,7 @@ impl fmt::Write for ScreenWriter {
 
 pub struct ScreenWriter {
     buffer: &'static mut Buffer,
-    //frames: [(i32, i32, i32, i32); 4],
+    screen_buffer: [u8; BUFFER_WIDTH * BUFFER_HEIGHT],
     frame: u8,
     clock_column_position: usize,
     terminal_column_position: usize,
@@ -119,7 +119,7 @@ pub struct ScreenWriter {
 }
 impl ScreenWriter {
     #[allow(dead_code)]
-    fn get_rgb(&self, r: u8, g: u8, b: u8) -> u8 {
+    pub fn get_rgb(&self, r: u8, g: u8, b: u8) -> u8 {
         let mut closest_color: (i16, usize) = (-1, 999999);
     
         for color in colors::COLOR_PALETTE.iter().enumerate() {
@@ -160,14 +160,14 @@ impl ScreenWriter {
         }
     }
     
-    fn draw_character(&mut self, character: u8, x: usize, y: usize, foreground: u8, background: u8) {
+    pub fn draw_character(&mut self, character: u8, x: usize, y: usize, foreground: u8, background: u8) {
         let characters = CHARACTERS[character as usize];
     
         for char in characters.iter().enumerate() {
             if char.1 == &true {
-                self.buffer.pixels[self.get_pixel_index(x + char.0 % 5, y + char.0 / 5)].write(foreground);
+                self.set_pixel(x + char.0 % 5, y + char.0 / 5, foreground);
             } else {
-                self.buffer.pixels[self.get_pixel_index(x + char.0 % 5, y + char.0 / 5)].write(background);
+                self.set_pixel(x + char.0 % 5, y + char.0 / 5, background);
             }
         }
     }
@@ -190,8 +190,15 @@ impl ScreenWriter {
         self.clear_characters(0);
     }
 
-    fn set_pixel(&mut self, x: usize, y: usize, color: u8) {
-        self.buffer.pixels[self.get_pixel_index(x, y)].write(color);
+    pub fn set_pixel(&mut self, x: usize, y: usize, color: u8) {
+        let pixel_index = self.get_pixel_index(x, y);
+        self.buffer.pixels[pixel_index].write(color);
+        self.screen_buffer[pixel_index] = color;
+    }
+
+    pub fn get_pixel(&self, x: usize, y: usize) -> u8 {
+        let pixel_index = self.get_pixel_index(x, y);
+        self.screen_buffer[pixel_index]
     }
 
     fn draw_terminal_character(&mut self, char: u8) {
@@ -249,7 +256,7 @@ lazy_static! {
     pub static ref SCREEN_WRITER: Mutex<ScreenWriter> = Mutex::new(ScreenWriter {
         buffer: unsafe { &mut *(0xa0000 as *mut Buffer) },
         frame: 0,
-        //frames: [(0, 0, 160, 100); 4],
+        screen_buffer: [0; BUFFER_WIDTH * BUFFER_HEIGHT],
         clock_column_position: 0,
         terminal_column_position: 0,
         terminal_character_buffer: [[(0, 15, 0); 27]; 19],

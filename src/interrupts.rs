@@ -1,3 +1,4 @@
+use pc_keyboard::KeyCode;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 use crate::hlt_loop;
 use crate::infoln;
@@ -113,14 +114,54 @@ extern "x86-interrupt" fn keyboard_interrupt_handler(
                     {
                         let mut keypresses = input::KEYPRESSES.lock();
                         let keypress_index = keypresses.1;
-                        keypresses.0[keypress_index as usize] = byte;
+                        keypresses.0[keypress_index as usize] = byte as u16;
                         keypresses.1 += 1;
                         if keypresses.1 > 7 {
                             keypresses.1 = 7;
                         }
                     }
                 },
-                DecodedKey::RawKey(_) => {},
+                DecodedKey::RawKey(character) => {
+                    match character {
+                        KeyCode::ArrowUp => {
+                            let mut keypresses = input::KEYPRESSES.lock();
+                            let keypress_index = keypresses.1;
+                            keypresses.0[keypress_index as usize] = 256;
+                            keypresses.1 += 1;
+                            if keypresses.1 > 7 {
+                                keypresses.1 = 7;
+                            }
+                        },
+                        KeyCode::ArrowDown => {
+                            let mut keypresses = input::KEYPRESSES.lock();
+                            let keypress_index = keypresses.1;
+                            keypresses.0[keypress_index as usize] = 257;
+                            keypresses.1 += 1;
+                            if keypresses.1 > 7 {
+                                keypresses.1 = 7;
+                            }
+                        },
+                        KeyCode::ArrowLeft => {
+                            let mut keypresses = input::KEYPRESSES.lock();
+                            let keypress_index = keypresses.1;
+                            keypresses.0[keypress_index as usize] = 258;
+                            keypresses.1 += 1;
+                            if keypresses.1 > 7 {
+                                keypresses.1 = 7;
+                            }
+                        },
+                        KeyCode::ArrowRight => {
+                            let mut keypresses = input::KEYPRESSES.lock();
+                            let keypress_index = keypresses.1;
+                            keypresses.0[keypress_index as usize] = 259;
+                            keypresses.1 += 1;
+                            if keypresses.1 > 7 {
+                                keypresses.1 = 7;
+                            }
+                        },
+                        _ => {}
+                    }
+                },
             }
         }
     }

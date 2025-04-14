@@ -152,10 +152,6 @@ impl BigString {
     #[allow(dead_code)]
     pub fn print(&self) {
         for index in 0..self.len() {
-            if self.get(index) as u8 as char == '\n' {
-                print!(":new:");
-                continue;
-            }
             print!("{}", self.get(index) as u8 as char);
         }
         print!("\n");
