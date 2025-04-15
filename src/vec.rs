@@ -167,7 +167,7 @@ impl BigVec {
 
     #[allow(dead_code)]
     pub fn empty() -> Self {
-        let heap_start = alloc::alloc(32);
+        let heap_start = alloc::alloc(0);
         Self {
             size: 0,
             heap_start: heap_start.0,

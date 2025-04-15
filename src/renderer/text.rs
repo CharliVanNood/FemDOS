@@ -1,19 +1,29 @@
 static CHARACTER_SIZE: usize = 5 * 7;
 
-pub static CHARACTERS: [[bool; CHARACTER_SIZE]; 123] = [
+static UNKNOWN: [bool; CHARACTER_SIZE] = [
+    false, false, false, false, false,
+    false, true,  true,  true,  false,
+    false, true,  false, true,  false,
+    false, true,  false, true,  false,
+    false, true,  false, true,  false,
+    false, true,  true,  true,  false,
+    false, false, false, false, false,
+];
+
+pub static CHARACTERS: [[bool; CHARACTER_SIZE]; 255] = [
     // these characters are empty characters for padding, you're allowed to add them, it's so it lines up with vga
-    [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE],
-    [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE],
+    [false; CHARACTER_SIZE], UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
 
-    [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE],
-    [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE],
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
 
-    [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE],
-    [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE],
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
 
-    [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], 
+    UNKNOWN, UNKNOWN, [false; CHARACTER_SIZE], 
     
-    [ // character ,
+    [ // character !
         false, false, false, false, false,
         false, false, true,  false, false,
         false, false, true,  false, false,
@@ -22,7 +32,7 @@ pub static CHARACTERS: [[bool; CHARACTER_SIZE]; 123] = [
         false, false, false, false, false,
         false, false, true,  false, false,
     ],
-    [ // character ,
+    [ // character "
         false, false, false, false, false,
         false, true,  false, true,  false,
         false, true,  false, true,  false,
@@ -32,9 +42,49 @@ pub static CHARACTERS: [[bool; CHARACTER_SIZE]; 123] = [
         false, false, false, false, false,
     ],
     
-    [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE],
+    UNKNOWN, UNKNOWN,
 
-    [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], [false; CHARACTER_SIZE], 
+    [ // character %
+        false, false, false, false, false,
+        false, true,  false, true,  false,
+        false, false, false, true,  false,
+        false, false, true,  false, false,
+        false, false, true,  false, false,
+        false, true,  false, false, false,
+        false, true,  false, true,  false,
+    ],
+    
+    UNKNOWN,
+
+    [ // character '
+        false, false, false, false, false,
+        false, false, true,  false, false,
+        false, false, true,  false, false,
+        false, false, false, false, false,
+        false, false, false, false, false,
+        false, false, false, false, false,
+        false, false, false, false, false,
+    ],
+    [ // character (
+        false, false, false, false, false,
+        false, false, true,  true,  false,
+        false, true,  true,  false, false,
+        false, true,  false, false, false,
+        false, true,  false, false, false,
+        false, true,  true,  false, false,
+        false, false, true,  true,  false,
+    ],
+    [ // character )
+        false, false, false, false, false,
+        false, true,  true,  false, false,
+        false, false, true,  true,  false,
+        false, false, false, true,  false,
+        false, false, false, true,  false,
+        false, false, true,  true,  false,
+        false, true,  true,  false, false,
+    ],
+
+    UNKNOWN, 
     [ // character +
         false, false, false, false, false,
         false, false, false, false, false,
@@ -179,7 +229,7 @@ pub static CHARACTERS: [[bool; CHARACTER_SIZE]; 123] = [
         false, false, true,  false, false,
         false, false, false, false, false,
     ],
-    [false; CHARACTER_SIZE], 
+    UNKNOWN, 
     [ // character <
         false, false, false, false, false,
         false, false, false, true,  false,
@@ -217,7 +267,7 @@ pub static CHARACTERS: [[bool; CHARACTER_SIZE]; 123] = [
         false, false, true,  false, false,
     ],
     
-    [false; CHARACTER_SIZE],
+    UNKNOWN,
 
     [ // character A
         false, false, false, false, false,
@@ -462,7 +512,7 @@ pub static CHARACTERS: [[bool; CHARACTER_SIZE]; 123] = [
         false, false, true,  false, false,
         false, false, true,  true,  false,
     ],
-    [false; CHARACTER_SIZE],
+    UNKNOWN,
     [ // character ]
         false, false, false, false, false,
         false, true,  true,  false, false,
@@ -473,7 +523,7 @@ pub static CHARACTERS: [[bool; CHARACTER_SIZE]; 123] = [
         false, true,  true,  false, false,
     ],
 
-    [false; CHARACTER_SIZE], 
+    UNKNOWN, 
 
     [ // character ]
         false, false, false, false, false,
@@ -485,7 +535,7 @@ pub static CHARACTERS: [[bool; CHARACTER_SIZE]; 123] = [
         true,  true,  true,  true,  false,
     ],
     
-    [false; CHARACTER_SIZE],
+    UNKNOWN,
     
     [ // character a
         false, false, false, false, false,
@@ -721,4 +771,19 @@ pub static CHARACTERS: [[bool; CHARACTER_SIZE]; 123] = [
         false, true,  false, false, false,
         false, true,  true,  true,  false,
     ],
+
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
+    UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN, UNKNOWN,
+    UNKNOWN, UNKNOWN
 ];
