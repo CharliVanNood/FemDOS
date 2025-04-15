@@ -23,6 +23,17 @@ impl BigString {
     }
 
     #[allow(dead_code)]
+    pub fn empty() -> Self {
+        let heap_start = alloc::alloc(0);
+        Self {
+            size: 0,
+            heap_start: heap_start.0,
+            heap_size: heap_start.1 - heap_start.0,
+            heap_end: heap_start.1
+        }
+    }
+
+    #[allow(dead_code)]
     pub fn from(value: &str) -> Self {
         let heap_start = alloc::alloc(8192);
         let mut size = 0;

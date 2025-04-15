@@ -254,7 +254,7 @@ pub fn create_file_from_str(parent: i32, filename: &str, filetype: &str, data: &
 pub fn read_file(name: [u8; 20]) -> BigString {
     if !file_exists(name) {
         warnln!("This file doesn't exist :c");
-        return BigString::new();
+        return BigString::empty();
     }
     
     let file = find_file(name);
@@ -264,6 +264,7 @@ pub fn read_file(name: [u8; 20]) -> BigString {
     let mut data = BigString::new();
 
     for i in 0..file_size {
+        if i > file_start + file_size { break; }
         let byte = alloc::read_byte(file_start + i * 8) as u8;
         data.add(byte);
     }

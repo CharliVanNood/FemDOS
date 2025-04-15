@@ -83,7 +83,6 @@ fn remove_byte() {
 
 fn print_help_command() {
     println!("\nWe have these general commands");
-    println!("[ping] - Pong");
     println!("[femc] [code] - FemC");
     println!("[basic] [code] - BASIC");
     println!("[color] - Toggle color");
@@ -92,11 +91,12 @@ fn print_help_command() {
     println!("[go] [flow] - Change flow");
     println!("[pong] - The game pong");
     println!("[cat] - Read a file");
-    println!("[time] - Shows time");
     println!("[timeset] [hour] - Set the current hour");
     println!("[per] - Performance");
     println!("[run] [file] - Run code");
     println!("[nyo] [message] - NyoBot");
+    println!("[imagine] [image] - Displays an image");
+    println!("[blip] [file] - Edit file");
 }
 
 #[allow(dead_code)]
