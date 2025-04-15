@@ -595,13 +595,14 @@ fn run_tokens_last(
                 
                     for keypress in keypresses.0 {
                         if keypress == 0 { break; }
+                        if keypress > 255 { continue; }
                         if keypress == 10 && text_input_len > 0 {
                             ended = true;
                             break;
                         } else if keypress == 10 {
                             break;
                         }
-                        print!("{}", keypress as char);
+                        print!("{}", keypress as u8 as char);
                         text_input[text_input_len] = keypress;
                         text_input_len += 1;
                     }

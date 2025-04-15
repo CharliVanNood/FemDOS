@@ -127,7 +127,12 @@ impl Allocator {
             needs_splitting = true;
         }
 
-        if needs_splitting && size < largest_section.1 {
+        if size > largest_section.1 {
+            warnln!("No more sectors available");
+            return (0, 0);
+        }
+
+        if needs_splitting {
             self.split_section(largest_section.0);
         }
         self.reserve_section(largest_section.0, size)
@@ -160,6 +165,7 @@ pub fn set_heap(heap_start: usize, heap_size: usize) {
 }
 
 pub fn alloc(size: usize) -> (usize, usize) {
+    if size == 0 { return (0, 0) }
     ALLOCATOR.lock().alloc(size)
 }
 

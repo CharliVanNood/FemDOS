@@ -1,4 +1,5 @@
 use crate::alloc;
+use crate::applications::blip;
 use crate::clock;
 use crate::window;
 use crate::{print, println, warnln};
@@ -10,7 +11,7 @@ use crate::window::render_image;
 lazy_static::lazy_static! {
     static ref CURRENT_TEXT: Mutex<[u8; 256]> = Mutex::new([0; 256]);
     static ref CURRENT_TEXT_END: Mutex<usize> = Mutex::new(0);
-    pub static ref KEYPRESSES: Mutex<([u8; 8], u8)> = Mutex::new(([0; 8], 0));
+    pub static ref KEYPRESSES: Mutex<([u16; 8], u8)> = Mutex::new(([0; 8], 0));
 }
 
 #[allow(dead_code)]
@@ -25,7 +26,8 @@ pub fn check_events() {
 
     for keypress in keypresses.0 {
         if keypress == 0 { break; }
-        add_key(keypress);
+        if keypress > 255 { continue; }
+        add_key(keypress as u8);
     }
 
     KEYPRESSES.lock().0 = [0; 8];
@@ -81,7 +83,6 @@ fn remove_byte() {
 
 fn print_help_command() {
     println!("\nWe have these general commands");
-    println!("[ping] - Pong");
     println!("[femc] [code] - FemC");
     println!("[basic] [code] - BASIC");
     println!("[color] - Toggle color");
@@ -90,11 +91,12 @@ fn print_help_command() {
     println!("[go] [flow] - Change flow");
     println!("[pong] - The game pong");
     println!("[cat] - Read a file");
-    println!("[time] - Shows time");
     println!("[timeset] [hour] - Set the current hour");
     println!("[per] - Performance");
     println!("[run] [file] - Run code");
     println!("[nyo] [message] - NyoBot");
+    println!("[imagine] [image] - Displays an image");
+    println!("[blip] [file] - Edit file");
 }
 
 #[allow(dead_code)]
@@ -102,7 +104,7 @@ pub fn match_commands(command_written:[u8; 256], user_ran:bool) {
     let commands = [
         "info", "ping", "color", "clear", "help", "femc", "fl", "go", 
         "install", "pong", "cat", "run", "per", "time", "input", "timeset",
-        "basic", "nyo", "screen", "char", "imagine", "imgtest"
+        "basic", "nyo", "screen", "char", "imagine", "imgtest", "blip"
         ];
 
     print!("\n");
@@ -181,7 +183,8 @@ pub fn match_commands(command_written:[u8; 256], user_ran:bool) {
                         name_len += 1;
                     }
 
-                    filesystem::read_file(name);
+                    let file_data = filesystem::read_file(name);
+                    file_data.print();
                 },
                 "run" => {
                     let mut name = [0; 20];
@@ -242,7 +245,9 @@ pub fn match_commands(command_written:[u8; 256], user_ran:bool) {
                     }
 
                     let image_data = filesystem::read_image(name);
-                    render_image(image_data);
+                    if image_data.len() > 0 {
+                        render_image(image_data);
+                    }
                 },
                 "imgtest" => {
                     let mut install: [u8; 256] = [0; 256];
@@ -251,15 +256,35 @@ pub fn match_commands(command_written:[u8; 256], user_ran:bool) {
                         install[i] = byte;
                         i += 1;
                     }
+                    let mut go: [u8; 256] = [0; 256];
+                    let mut i = 0;
+                    for byte in "go images".bytes() {
+                        go[i] = byte;
+                        i += 1;
+                    }
                     let mut imagine: [u8; 256] = [0; 256];
                     let mut i = 0;
-                    for byte in "imagine smiley".bytes() {
+                    for byte in "imagine koi".bytes() {
                         imagine[i] = byte;
                         i += 1;
                     }
                     match_commands(install,false);
+                    match_commands(go,false);
                     match_commands(imagine,false)
-                }
+                },
+                "blip" => {
+                    let mut name = [0; 20];
+                    let mut name_len = 0;
+
+                    for byte_index in 5..23 {
+                        let byte = command_written[byte_index];
+                        if byte == 0 { break; }
+                        name[name_len] = byte as u8;
+                        name_len += 1;
+                    }
+
+                    blip::open(name);
+                },
                 _ => warnln!("This command is unimplemented :C")
             }
         }
